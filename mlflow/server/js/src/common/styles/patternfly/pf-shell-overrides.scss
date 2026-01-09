@@ -1347,6 +1347,11 @@
     }
   }
 
+  /* Remove 'Show more columns' button in the experiment runs table */
+  button[class*='ExperimentViewRunsTableAddColumnCTA'] {
+    display: none !important;
+  }
+
   // Swap caret icon
   .du-bois-dark-select-arrow > .anticon,
   .du-bois-light-select-arrow > .anticon,
