@@ -268,6 +268,7 @@
   .du-bois-light-alert-warning,
   .du-bois-dark-alert-warning {
     border-color: var(--pf-t--global--border--color--status--warning--default);
+    background-color: var(--pf-t--global--background--color--floating--default);
   }
 
   .du-bois-light-input-group,
@@ -361,6 +362,7 @@
   button.du-bois-dark-btn[aria-label='Search'],
   button.du-bois-light-btn[aria-label='Search'] {
     color: var(--pf-v6-c-content--Color) !important;
+    border-radius: 0 var(--pf-t--global--border--radius--small) var(--pf-t--global--border--radius--small) 0 !important;
     span > span > svg {
       color: var(--pf-v6-c-content--Color) !important;
     }
@@ -1724,6 +1726,35 @@
   /* Fix transparent background for recharts tooltip wrapper caused by hex color concatenation */
   .recharts-tooltip-wrapper > div {
     background-color: color-mix(in srgb, var(--pf-t--global--background--color--primary--default) 60%, transparent);
+  }
+
+  /* Alias tags — styled as PF compact outlined labels */
+  [data-component-type='tag'][role='status']:not([aria-haspopup]) {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    padding-block: 0;
+    padding-inline: var(--pf-t--global--spacer--sm);
+    font-size: var(--pf-t--global--font--size--body--sm) !important;
+    line-height: var(--pf-t--global--font--line-height--body) !important;
+
+    * {
+      font-family: inherit !important;
+      font-size: inherit !important;
+    }
+    border: var(--pf-t--global--border--width--action--default) solid
+      var(--pf-t--global--border--color--nonstatus--gray--default);
+    border-radius: var(--pf-t--global--border--radius--pill);
+    background-color: transparent;
+    color: var(--pf-t--global--text--color--regular);
+    white-space: nowrap;
+  }
+
+  /* Alias tag container — align tag and edit button */
+  div:has(> [data-component-type='tag'][role='status']) {
+    display: flex;
+    align-items: center;
+    gap: var(--pf-t--global--spacer--xs);
   }
 }
 
