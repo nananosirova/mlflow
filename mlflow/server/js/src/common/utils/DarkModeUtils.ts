@@ -1,3 +1,5 @@
+import { isIntegrated } from './embedUtils';
+
 const databricksDarkModePrefLocalStorageKey = 'databricks-dark-mode-pref';
 const darkModePrefLocalStorageKey = '_mlflow_dark_mode_toggle_enabled';
 
@@ -19,10 +21,10 @@ export const getCurrentDarkModePreference = (): boolean => {
   }
   try {
     const darkModePref = getDarkModePrefFromLocalStorage();
-    return darkModePref ?? getSystemDarkModePref();
+    return darkModePref ?? (isIntegrated() ? false : getSystemDarkModePref());
   } catch {
     // no-op: localStorage might be unavailable (e.g., private browsing)
-    return getSystemDarkModePref();
+    return isIntegrated() ? false : getSystemDarkModePref();
   }
 };
 
