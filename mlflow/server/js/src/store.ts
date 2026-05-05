@@ -10,8 +10,14 @@ import promiseMiddleware from 'redux-promise-middleware';
 import thunk from 'redux-thunk';
 
 import { rootReducer } from './experiment-tracking/reducers/Reducers';
+import { onWorkspaceChange } from './workspaces/utils/WorkspaceUtils';
+import { WORKSPACE_CHANGED } from './experiment-tracking/actions';
 
 const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 const store = createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk, promiseMiddleware())));
+
+onWorkspaceChange(() => {
+  store.dispatch({ type: WORKSPACE_CHANGED });
+});
 
 export default store;
