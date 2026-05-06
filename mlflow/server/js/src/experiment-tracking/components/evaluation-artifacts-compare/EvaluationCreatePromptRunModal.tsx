@@ -280,20 +280,20 @@ export const EvaluationCreatePromptRunModal = ({
       });
   }, [inputVariableValues, modelRoutesUnified, parameters, promptTemplate, selectedModel, intl]);
 
-  const handleCancelModal = useCallback(() => {
-    fireFormTrackingEvent(MLflowEventNames.NEW_RUN_CREATED, {
-      outcome: TrackingOutcome.cancel,
-    });
-    handleCancel(); // abort in-progress evaluation
-    closeModal();
-  }, [closeModal]);
-
   const handleCancel = useCallback(() => {
     if (cancelTokenRef.current) {
       setIsEvaluating(false);
       cancelTokenRef.current = null;
     }
   }, [setIsEvaluating]);
+
+  const handleCancelModal = useCallback(() => {
+    fireFormTrackingEvent(MLflowEventNames.NEW_RUN_CREATED, {
+      outcome: TrackingOutcome.cancel,
+    });
+    handleCancel();
+    closeModal();
+  }, [closeModal, handleCancel]);
 
   const selectModelLabel = intl.formatMessage({
     defaultMessage: 'Served LLM model',
