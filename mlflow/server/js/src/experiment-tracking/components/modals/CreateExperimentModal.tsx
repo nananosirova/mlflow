@@ -37,6 +37,10 @@ export class CreateExperimentModalImpl extends Component<CreateExperimentModalIm
 
     try {
       const response = await this.props.createExperimentApi(experimentName, artifactLocation);
+      fireFormTrackingEvent(MLflowEventNames.EXPERIMENT_CREATED, {
+        outcome: TrackingOutcome.submit,
+        success: true,
+      });
       this.props.onExperimentCreated();
 
       const {
@@ -46,10 +50,6 @@ export class CreateExperimentModalImpl extends Component<CreateExperimentModalIm
       if (newExperimentId) {
         this.props.navigate(Routes.getExperimentPageRoute(newExperimentId));
       }
-      fireFormTrackingEvent(MLflowEventNames.EXPERIMENT_CREATED, {
-        outcome: TrackingOutcome.submit,
-        success: true,
-      });
     } catch (e: any) {
       fireFormTrackingEvent(MLflowEventNames.EXPERIMENT_CREATED, {
         outcome: TrackingOutcome.submit,
