@@ -284,6 +284,7 @@ export const EvaluationCreatePromptRunModal = ({
     fireFormTrackingEvent(MLflowEventNames.NEW_RUN_CREATED, {
       outcome: TrackingOutcome.cancel,
     });
+    handleCancel(); // abort in-progress evaluation
     closeModal();
   }, [closeModal]);
 
