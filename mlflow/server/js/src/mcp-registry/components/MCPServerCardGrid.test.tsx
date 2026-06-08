@@ -5,7 +5,7 @@ import { DesignSystemProvider } from '@databricks/design-system';
 import { MCPServerCardGrid } from './MCPServerCardGrid';
 import { createMockMCPServer } from '../test-utils';
 
-const renderGrid = (props: React.ComponentProps<typeof MCPServerCardGrid>) =>
+const renderGrid = (props: Partial<React.ComponentProps<typeof MCPServerCardGrid>> = {}) =>
   render(
     <IntlProvider locale="en">
       <DesignSystemProvider>
