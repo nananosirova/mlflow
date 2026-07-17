@@ -4891,7 +4891,7 @@ __metadata:
     invariant: "npm:^2.2.4"
     jest-canvas-mock: "npm:^2.2.0"
     jest-localstorage-mock: "npm:^2.3.0"
-    js-yaml: "npm:^4.2.0"
+    js-yaml: "npm:^4.3.0"
     json-bigint: "patch:json-bigint@npm%3A1.0.0#yarn/patches/json-bigint-npm-1.0.0-mlflow.patch"
     knip: "npm:^5.30.2"
     leaflet: "npm:^1.5.1"
@@ -23311,18 +23311,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"js-yaml@npm:4.2.0":
-  version: 4.2.0
-  resolution: "js-yaml@npm:4.2.0"
-  dependencies:
-    argparse: "npm:^2.0.1"
-  bin:
-    js-yaml: bin/js-yaml.js
-  checksum: 10c0/1916456c118746603b067d74bbcbb0445d9a1d5e474ad4ae775e7b20525bed902e01d9d97dd0c81fcd8d4f596162309d0eb057f4aa38f3e9647f14075e9dea45
-  languageName: node
-  linkType: hard
-
-"js-yaml@npm:^4.2.0":
+"js-yaml@npm:4.3.0, js-yaml@npm:^4.3.0":
   version: 4.3.0
   resolution: "js-yaml@npm:4.3.0"
   dependencies:
