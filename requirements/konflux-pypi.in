@@ -13,5 +13,6 @@
 mlflow-kubernetes-plugins==1.1.1
 psycopg2
 prometheus-flask-exporter
-# Starlette 1.0.1+ is not yet available on the rhoai/3.4 AIPCC index.
-starlette>=1.0.1,<2
+# Installed via the Konflux PyPI wheel side-channel (see Dockerfile.konflux).
+# 1.3.1+ fixes CVE-2026-54283 (urlencoded form limits); also on AIPCC 3.4 indexes.
+starlette>=1.3.1,<2
