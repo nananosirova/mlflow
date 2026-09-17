@@ -1,9 +1,8 @@
-import { Tooltip, Typography } from '@databricks/design-system';
+import { Typography } from '@databricks/design-system';
 import type { ColumnDef } from '@tanstack/react-table';
 import { FormattedMessage } from 'react-intl';
 import type { RegisteredPrompt } from '../types';
-
-const MODEL_NAME_MAX_WIDTH = 200;
+import { PromptModelName } from './PromptModelName';
 
 export const PromptsListTableModelCell: ColumnDef<RegisteredPrompt>['cell'] = ({ getValue }) => {
   const rawValue = getValue();
@@ -20,19 +19,5 @@ export const PromptsListTableModelCell: ColumnDef<RegisteredPrompt>['cell'] = ({
     );
   }
 
-  return (
-    <Tooltip content={modelName} componentId="mlflow.prompts.list.model.tooltip">
-      <Typography.Text
-        css={{
-          maxWidth: MODEL_NAME_MAX_WIDTH,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          display: 'block',
-        }}
-      >
-        {modelName}
-      </Typography.Text>
-    </Tooltip>
-  );
+  return <PromptModelName modelName={modelName} componentId="mlflow.prompts.list.model.tooltip" />;
 };

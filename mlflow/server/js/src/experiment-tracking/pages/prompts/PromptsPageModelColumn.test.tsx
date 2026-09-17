@@ -70,10 +70,10 @@ describe('PromptsPage associated model column', () => {
     });
   };
 
-  it('should render Associated Model column with model name and Not specified', async () => {
+  it('should render Model column with model name and Not specified', async () => {
     renderTestComponent();
     await waitFor(() => {
-      expect(screen.getByText('Associated Model')).toBeInTheDocument();
+      expect(screen.getByText('Model')).toBeInTheDocument();
     });
 
     await waitFor(() => {
