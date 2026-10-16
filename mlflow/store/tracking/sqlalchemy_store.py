@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 
 import sqlalchemy
 import sqlalchemy.orm
+from cachetools import TTLCache
 from sqlalchemy import and_, case, exists, func, or_, select, sql
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Query, Session, aliased, joinedload, selectinload
@@ -37,6 +38,7 @@ from mlflow.entities import (
     EvaluationDataset,
     Expectation,
     Experiment,
+    ExperimentTag,
     Feedback,
     Issue,
     IssueSeverity,
@@ -264,6 +266,7 @@ from mlflow.utils.file_utils import local_file_uri_to_path
 from mlflow.utils.mlflow_tags import (
     MLFLOW_ARTIFACT_LOCATION,
     MLFLOW_DATASET_CONTEXT,
+    MLFLOW_EXPERIMENT_KIND,
     MLFLOW_LOGGED_MODELS,
     MLFLOW_RUN_NAME,
     MLFLOW_USER,
@@ -311,6 +314,12 @@ from mlflow.utils.workspace_utils import DEFAULT_WORKSPACE_NAME
 _T = TypeVar("_T")
 
 _logger = logging.getLogger(__name__)
+
+# Kind given to an experiment that receives traces before anyone has set its kind. The
+# "_inferred" suffix marks it as guessed by the server rather than chosen by a user.
+_TRACED_EXPERIMENT_KIND = "genai_development_inferred"
+_TRACED_EXPERIMENT_KIND_CACHE_MAXSIZE = 10_000
+_TRACED_EXPERIMENT_KIND_CACHE_TTL_SECONDS = 3600
 
 _RUN_DELETE_CASCADE_MODELS = (SqlMetric, SqlLatestMetric, SqlParam, SqlTag)
 
@@ -446,6 +455,14 @@ class SqlAlchemyStore(
         # The LocalArtifactRepository creates it lazily when the first artifact is logged.
         # This avoids permission errors in read-only environments (e.g., K8s containers)
         # when the artifact root is local but never actually used.
+
+        # (workspace, experiment ID) pairs whose kind tag was already checked after a trace
+        # write, so later traces skip the lookup. Entries expire so a removed tag comes back.
+        self._traced_experiment_kind_checked: TTLCache[tuple[str, str], bool] = TTLCache(
+            maxsize=_TRACED_EXPERIMENT_KIND_CACHE_MAXSIZE,
+            ttl=_TRACED_EXPERIMENT_KIND_CACHE_TTL_SECONDS,
+        )
+        self._traced_experiment_kind_checked_lock = threading.Lock()
 
         self._initialize_store_state()
 
@@ -3887,7 +3904,33 @@ class SqlAlchemyStore(
         """
         # Retry on DB deadlocks so a concurrent log_spans()/start_trace() race does not
         # drop the trace. Each attempt opens a fresh managed session.
-        return self._run_with_deadlock_retry(self._start_trace_once, trace_info)
+        trace_info = self._run_with_deadlock_retry(self._start_trace_once, trace_info)
+        self._set_traced_experiment_kind(trace_info.experiment_id)
+        return trace_info
+
+    def _set_traced_experiment_kind(self, experiment_id: str) -> None:
+        """
+        Mark an experiment that receives traces as a GenAI experiment if it has no kind tag
+        yet, so GenAI-only experiment lists include experiments created outside the UI. An
+        existing kind, such as one chosen when the experiment was created, is never changed.
+
+        Runs after the trace write has committed and never fails it.
+        """
+        try:
+            cache_key = (self._get_active_workspace(), str(experiment_id))
+            with self._traced_experiment_kind_checked_lock:
+                if cache_key in self._traced_experiment_kind_checked:
+                    return
+            experiment = self.get_experiment(experiment_id)
+            if MLFLOW_EXPERIMENT_KIND not in experiment.tags:
+                self.set_experiment_tag(
+                    experiment_id, ExperimentTag(MLFLOW_EXPERIMENT_KIND, _TRACED_EXPERIMENT_KIND)
+                )
+        except Exception:
+            _logger.debug("Failed to set the kind of experiment %s", experiment_id, exc_info=True)
+            return
+        with self._traced_experiment_kind_checked_lock:
+            self._traced_experiment_kind_checked[cache_key] = True
 
     def _start_trace_once(self, trace_info: "TraceInfo") -> TraceInfo:
         trace_name = validate_trace_name(trace_info.tags.get(TraceTagKey.TRACE_NAME))
@@ -5703,9 +5746,12 @@ class SqlAlchemyStore(
         """
         # Retry on DB deadlocks so a concurrent start_trace()/log_spans() race does not
         # drop metadata. Each attempt opens a fresh managed session.
-        return self._run_with_deadlock_retry(
+        logged_spans = self._run_with_deadlock_retry(
             self._log_spans_once, location, spans, tracking_uri=tracking_uri
         )
+        if logged_spans:
+            self._set_traced_experiment_kind(location)
+        return logged_spans
 
     def _log_spans_once(self, location: str, spans: list[Span], tracking_uri=None) -> list[Span]:
         if not spans:
@@ -8450,7 +8496,10 @@ class SqlAlchemyStore(
             )
             session.add(trace_info)
 
-            return TraceInfoV2.from_v3(trace_info.to_mlflow_entity())
+            trace_info_v2 = TraceInfoV2.from_v3(trace_info.to_mlflow_entity())
+
+        self._set_traced_experiment_kind(experiment_id)
+        return trace_info_v2
 
     def deprecated_end_trace_v2(
         self,
